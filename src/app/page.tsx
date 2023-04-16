@@ -1,9 +1,9 @@
 import Todos from "@/components/Todos";
 
-export default function Home() {
+export default async function Home() {
   return (
-    <main>
-      <Todos />
-    </main>
+      <main>
+        <Todos />
+      </main>
   );
 }

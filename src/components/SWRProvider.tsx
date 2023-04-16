@@ -1,18 +1,30 @@
 "use client";
 
+import { MyResponse } from "@/response/responses";
 import React from "react";
 import { SWRConfig } from "swr";
 
 interface Props {
   children: React.ReactNode;
-  fallback?: { [K in string]: any };
+  fallback?: Record<string, any>;
 }
 
-async function fetcher(url: string) {
-  const response = await fetch(url);
-  return await response.json();
+async function fetcher(body: string) {
+  const response = await fetch("http://localhost:3000/api/graphql", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body,
+  });
+  const { data } = await response.json();
+  return data;
 }
 
 export default function SWRProvider({ children, fallback }: Props) {
-  return <SWRConfig value={{ fallback, fetcher }}>{children}</SWRConfig>;
+  return (
+    <SWRConfig value={{ fallback, fetcher, revalidateOnMount: false }}>
+      {children}
+    </SWRConfig>
+  );
 }

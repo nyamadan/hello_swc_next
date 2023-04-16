@@ -1,17 +1,26 @@
 "use client";
 
-import { assertIfNull } from "@/asserts";
-import useSWR from "@/hooks/uswSRW";
+import useSWR from "@/hooks/useSWR";
+import { GQL_GET_TODO_LIST } from "@/response/responses";
 
-interface Props {}
+export default function Todos() {
+  const { data } = useSWR({ query: GQL_GET_TODO_LIST });
+  const todos = data != null ? data.getTodoList.slice() : [];
+  todos.sort((a, b) => (a.id > b.id ? 1 : -1));
 
-export default function Todos({}: Props) {
-  const { data: todos } = useSWR({ url: "/api/todos" });
-  assertIfNull(todos);
   return (
-    <div>
-      {todos.map(({ id, content }) => {
-        return <p key={id}>{content}</p>;
+    <div className="flex flex-col gap-y-4 p-4">
+      {todos.map(({ id, text, createdAt, status }) => {
+        return (
+          <div key={id}>
+            <ul>
+              <li>{id}</li>
+              <li>{text}</li>
+              <li>{status}</li>
+              <li>{createdAt}</li>
+            </ul>
+          </div>
+        );
       })}
     </div>
   );

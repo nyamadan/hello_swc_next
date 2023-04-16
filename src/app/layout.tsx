@@ -1,11 +1,6 @@
 import SWRProvider from "@/components/SWRProvider";
-import {
-  MyRequestKey,
-  MyRequest,
-  MyResponse,
-  requestToString,
-} from "@/response/responses";
-import fetchJson from "@/server/fetchJson";
+import { GQL_GET_TODO_LIST } from "@/response/responses";
+import fetchGraphQL from "@/server/fetchGraphQL";
 import React from "react";
 import "./globals.css";
 
@@ -19,18 +14,17 @@ interface Props {
 }
 
 export default async function RootLayout({ children }: Props) {
-  const responses: Partial<
-    Record<string, { [R in MyRequestKey]: MyResponse[R] }[MyRequestKey]>
-  > = {};
-  for (const req of [{ url: "/api/todos" }] satisfies MyRequest[]) {
-    const res = await fetchJson(req);
-    responses[requestToString(req)] = res;
+  const fallback: Record<string, any> = {};
+  for (const { key, data } of Promise.all([
+    fetchGraphQL({ query: GQL_GET_TODO_LIST }),
+  ])) {
+    fallback[key] = data;
   }
 
   return (
     <html lang="en">
       <body>
-        <SWRProvider fallback={responses}>{children}</SWRProvider>
+        <SWRProvider fallback={fallback}>{children}</SWRProvider>
       </body>
     </html>
   );

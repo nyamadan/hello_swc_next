@@ -1,3 +1,11 @@
+src/types/generated/graphql.ts
+
+prisma/migrations/migration_lock.toml
+*.db
+*.db-journal
+
+.env
+
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
