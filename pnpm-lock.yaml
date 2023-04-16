@@ -40,6 +40,9 @@ dependencies:
   eslint-config-next:
     specifier: ^13.3.0
     version: 13.3.0(eslint@8.38.0)(typescript@5.0.4)
+  eventsource-parser:
+    specifier: ^1.0.0
+    version: 1.0.0
   graphql:
     specifier: ^16.6.0
     version: 16.6.0
@@ -3120,6 +3123,11 @@ packages:
   /etag@1.8.1:
     resolution: {integrity: sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==}
     engines: {node: '>= 0.6'}
+    dev: false
+
+  /eventsource-parser@1.0.0:
+    resolution: {integrity: sha512-9jgfSCa3dmEme2ES3mPByGXfgZ87VbP97tng1G2nWwWx6bV2nYxm2AWCrbQjXToSe+yYlqaZNtxffR9IeQr95g==}
+    engines: {node: '>=14.18'}
     dev: false
 
   /express@4.18.2:
