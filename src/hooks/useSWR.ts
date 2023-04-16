@@ -1,5 +1,5 @@
 "use client";
-import { MyRequest, MyResponse } from "@/response/responses";
+import { MyRequest, MyResponse } from "@/query/query";
 import _useSWR from "swr";
 
 export default function useSWR<T extends MyRequest>(req: T) {

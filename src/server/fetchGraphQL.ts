@@ -1,4 +1,4 @@
-import { MyRequest, MyResponse } from "@/response/responses";
+import { MyRequest, MyResponse } from "@/query/query";
 
 export default async function fetchGraphQL<Req extends MyRequest>(req: Req) {
   const body = JSON.stringify(req);

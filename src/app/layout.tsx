@@ -1,5 +1,5 @@
 import SWRProvider from "@/components/SWRProvider";
-import { GQL_GET_TODO_LIST } from "@/response/responses";
+import { GQL_GET_TODO_LIST } from "@/query/query";
 import fetchGraphQL from "@/server/fetchGraphQL";
 import React from "react";
 import "./globals.css";

@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "@/hooks/useSWR";
-import { GQL_GET_TODO_LIST } from "@/response/responses";
+import { GQL_GET_TODO_LIST } from "@/query/query";
 
 export default function Todos() {
   const { data } = useSWR({ query: GQL_GET_TODO_LIST });
