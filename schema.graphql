@@ -1,19 +1,22 @@
 scalar DateTime
-scalar TodoStatus
 
 type Query {
-  getTodo(id: String!): Todo
-  getTodoList: [Todo!]!
+  getHomePage: HomePage!
+  getUser(userId: String!): User
+  getUsersByName(name: String!): [User!]!
 }
 
 type Mutation {
-  addTodo(text: String!): Todo
-  updateTodo(id: String!, text: String, status: TodoStatus): Todo
+  addUser(name: String!): User!
+  updateUser(id: String!, name: String): User!
 }
 
-type Todo {
+type User {
   id: String!
-  text: String!
-  status: TodoStatus!
+  name: String!
   createdAt: DateTime!
+}
+
+type HomePage {
+  user: User
 }

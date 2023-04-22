@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import z from "zod";
 import { ChatGPTMessage, OpenAIStreamPayload } from "./openai";
 
 // break the app if the API key is missing
@@ -13,7 +14,7 @@ export const config = {
 const handler = async (req: NextRequest): Promise<NextResponse> => {
   const body = await req.json();
 
-  const messages: ChatGPTMessage[] = [
+  const messages: z.infer<typeof ChatGPTMessage>[] = [
     {
       role: "system",
       content: `An AI assistant that is a Front-end expert in Next.js, React and Vercel have an inspiring and humorous conversation. 
@@ -52,14 +53,17 @@ const handler = async (req: NextRequest): Promise<NextResponse> => {
     requestHeaders["OpenAI-Organization"] = process.env.OPENAI_API_ORG;
   }
 
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
     headers: requestHeaders,
     method: "POST",
     body: JSON.stringify(payload),
     cache: "no-store",
   });
 
-  return NextResponse.json(await res.json());
+  return NextResponse.json(await response.json(), {
+    status: response.status,
+    statusText: response.statusText,
+  });
 };
 
 export function POST(req: NextRequest) {
