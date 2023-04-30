@@ -1,78 +1,97 @@
-import { Prisma, PrismaClient } from "@prisma/client";
-import { ulid } from "ulid";
 import {
   MutationResolvers,
   QueryResolvers,
   Resolvers,
-  Todo,
 } from "@/types/generated/graphql";
+import { Prisma, PrismaClient } from "@prisma/client";
+import { getServerSession } from "next-auth";
+import { ulid } from "ulid";
+import { authOptions } from "../auth/[...nextauth]/route";
 const prisma = new PrismaClient();
 
 const Query: QueryResolvers = {
-  getTodo: async (...args) => {
-    const [_, { id }] = args;
-
-    const todo = await prisma.todo.findUnique({
+  getUser: async (_, { userId }) => {
+    const user = await prisma.user.findUniqueOrThrow({
       where: {
-        id,
+        id: userId,
       },
     });
-
-    if (todo == null) {
-      return null;
-    }
 
     return {
-      ...todo,
-      status: todo.status as Todo["status"],
-      createdAt: todo.createdAt.toISOString(),
+      id: user.id,
+      name: user.name,
+      createdAt: user.createdAt.toISOString(),
     };
   },
-
-  getTodoList: async () => {
-    const result = await prisma.todo.findMany({
-      orderBy: {
-        id: "desc",
+  getUsersByName: async (_, { name }) => {
+    const users = await prisma.user.findMany({
+      where: {
+        name,
       },
+      take: 100,
     });
 
-    return result.map<Todo>((todo) => ({
-      ...todo,
-      status: todo.status as Todo["status"],
-      createdAt: todo.createdAt.toISOString(),
+    return users.map((user) => ({
+      id: user.id,
+      name: user.name,
+      createdAt: user.createdAt.toISOString(),
     }));
+  },
+  getHomePage: async (_) => {
+    const session = await getServerSession(authOptions);
+    const userId = session?.user.id ?? null;
+    const user =
+      userId != null
+        ? await prisma.user.findUniqueOrThrow({
+            where: {
+              id: userId,
+            },
+          })
+        : null;
+
+    if (user != null) {
+      return {
+        user: {
+          id: user.id,
+          name: user.name,
+          createdAt: user.createdAt.toISOString(),
+        },
+      };
+    } else {
+      return {
+        user: null,
+      };
+    }
   },
 };
 
 const Mutation: MutationResolvers = {
-  addTodo: async (_, { text }) => {
-    const data: Prisma.TodoUncheckedCreateInput = {
+  addUser: async (_, { name }) => {
+    const data: Prisma.UserUncheckedCreateInput = {
       id: ulid(),
-      text,
+      name,
     };
 
-    const todo = await prisma.todo.create({ data });
+    const users = await prisma.user.create({ data });
     return {
-      ...todo,
-      status: todo.status as Todo["status"],
-      createdAt: todo.createdAt.toISOString(),
+      ...users,
+      createdAt: users.createdAt.toISOString(),
     };
   },
-  updateTodo: async (_, { id, status, text }) => {
-    const todo = await prisma.todo.update({
+  updateUser: async (_, { id, name }) => {
+    const user = await prisma.user.update({
       where: {
         id,
       },
       data: {
-        text: text ?? undefined,
-        status: status ?? undefined,
+        name: name ?? undefined,
       },
     });
 
     return {
-      ...todo,
-      status: todo.status as Todo["status"],
-      createdAt: todo.createdAt.toISOString(),
+      id: user.id,
+      name: user.name,
+      createdAt: user.createdAt.toISOString(),
     };
   },
 };

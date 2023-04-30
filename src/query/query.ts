@@ -1,17 +1,54 @@
-import { Query } from "@/types/generated/graphql";
+import { Mutation, Query } from "@/types/generated/graphql";
 
-export const GQL_GET_TODO_LIST = `#graphql
+export const GQL_GET_HOME_PAGE = `#graphql
 query Query {
-  getTodoList {
-    id
-    text
-    status
-    createdAt
+  getHomePage {
+    user {
+      createdAt
+      id
+      name
+    }
   }
 }
 `;
 
-type MyQuerySet = MyQuery<typeof GQL_GET_TODO_LIST, Query>;
+export const GQL_GET_USER = `#graphql
+query Query($userId: String!) {
+  getUser(userId: $userId) {
+    createdAt
+    id
+    name
+  }
+}
+`;
+
+export const GQL_GET_USERS_BY_NAME = `#graphql
+query Query($name: String!) {
+  getUsersByName(name: $name) {
+    createdAt
+    id
+    name
+  }
+}
+`;
+
+export const GQL_ADD_USER = `#graphql
+mutation Mutation($name: String!) {
+  addUser(name: $name) {
+    createdAt
+    id
+    name
+  }
+}
+`;
+
+type MyQuerySet = MyQuery<
+  typeof GQL_GET_HOME_PAGE,
+  Pick<Query, "getHomePage">
+> &
+  MyQuery<typeof GQL_GET_USERS_BY_NAME, Pick<Query, "getUsersByName">> &
+  MyQuery<typeof GQL_GET_USER, Pick<Query, "getUser">, { userId: string }> &
+  MyQuery<typeof GQL_ADD_USER, Pick<Mutation, "addUser">, { name: string }>;
 
 type MyQuery<
   Query extends string,
