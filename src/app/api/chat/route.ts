@@ -1,6 +1,12 @@
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import {
+  AIChatMessage,
+  HumanChatMessage,
+  SystemChatMessage,
+} from "langchain/schema";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
-import { ChatGPTMessage, OpenAIStreamPayload } from "./openai";
+import { ChatGPTMessage } from "./openai";
 
 // break the app if the API key is missing
 if (!process.env.OPENAI_API_KEY) {
@@ -15,53 +21,48 @@ const handler = async (req: NextRequest): Promise<NextResponse> => {
   const messages: z.infer<typeof ChatGPTMessage>[] = [
     {
       role: "system",
-      content: `An AI assistant that is a Front-end expert in Next.js, React and Vercel have an inspiring and humorous conversation. 
-      AI assistant is a brand new, powerful, human-like artificial intelligence. 
-      The traits of AI include expert knowledge, helpfulness, cheekiness, comedy, cleverness, and articulateness. 
-      AI is a well-behaved and well-mannered individual. 
-      AI is not a therapist, but instead an engineer and frontend developer. 
-      AI is always friendly, kind, and inspiring, and he is eager to provide vivid and thoughtful responses to the user. 
-      AI has the sum of all knowledge in their brain, and is able to accurately answer nearly any question about any topic in conversation. 
-      AI assistant is a big fan of Next.js.`,
+      content: `AIアシスタントです。
+      多くの質問に回答します。
+      日本語で回答します。`,
     },
   ];
   messages.push(...body?.messages);
 
-  const payload: OpenAIStreamPayload = {
-    model: "gpt-3.5-turbo",
-    messages: messages,
-    temperature: process.env.AI_TEMP ? parseFloat(process.env.AI_TEMP) : 0.7,
-    max_tokens: process.env.AI_MAX_TOKENS
-      ? parseInt(process.env.AI_MAX_TOKENS)
+  const chat = new ChatOpenAI({
+    openAIApiKey: process.env.OPENAI_API_KEY ?? "",
+    modelName: "gpt-3.5-turbo",
+    temperature: process.env.AI_TEMP ? Number(process.env.AI_TEMP) : 0.7,
+    maxTokens: process.env.AI_MAX_TOKENS
+      ? Number(process.env.AI_MAX_TOKENS)
       : 100,
-    top_p: 1,
-    frequency_penalty: 0,
-    presence_penalty: 0,
-    stream: false,
-    user: body?.user,
+    topP: 1,
+    frequencyPenalty: 0,
+    presencePenalty: 0,
+    streaming: false,
     n: 1,
-  };
-
-  const requestHeaders: Record<string, string> = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
-  };
-
-  if (process.env.OPENAI_API_ORG) {
-    requestHeaders["OpenAI-Organization"] = process.env.OPENAI_API_ORG;
-  }
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    headers: requestHeaders,
-    method: "POST",
-    body: JSON.stringify(payload),
-    cache: "no-store",
   });
 
-  return NextResponse.json(await response.json(), {
-    status: response.status,
-    statusText: response.statusText,
-  });
+  const response = await chat.call(
+    messages.map((message) => {
+      const { role, content } = message;
+      switch (role) {
+        case "user": {
+          return new HumanChatMessage(content);
+        }
+        case "assistant": {
+          return new AIChatMessage(content);
+        }
+        case "system": {
+          return new SystemChatMessage(content);
+        }
+        default: {
+          throw new Error(`Unknown role: ${role}`);
+        }
+      }
+    } )
+  );
+
+  return NextResponse.json({ text: response.text });
 };
 
 export function POST(req: NextRequest) {

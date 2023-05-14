@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  ChatGPTMessage,
-  ChatGPTMessageType,
-  OpenAIResponse,
-} from "@/app/api/chat/openai";
+import { ChatGPTMessage, ChatGPTMessageType } from "@/app/api/chat/openai";
 import {
   Loading,
   addLoading,
@@ -22,7 +18,7 @@ import z from "zod";
 const initialMessages = [
   {
     role: "assistant",
-    content: "Hi! I am a friendly AI assistant. Ask me anything!",
+    content: "こんにちは！何でも聞いてください！",
   },
 ] satisfies ChatGPTMessageType[];
 
@@ -87,20 +83,17 @@ export default function Chat({ user }: Props) {
           }),
         });
 
-        const data = OpenAIResponse.parse(await response.json());
-        if (data.error != null) {
-          showErrorToast(data.error.message);
-        } else {
-          const responseMessages = data.choices.map(
-            ({ message: { content, role } }) => ({
-              content,
-              role: z.enum(["user", "system", "assistant"]).parse(role),
-            })
-          );
-          setMessages((prev) => {
-            return [...prev, message, ...responseMessages];
-          });
-        }
+        const { text } = await response.json();
+        setMessages((prev) => {
+          return [
+            ...prev,
+            message,
+            {
+              role: "assistant",
+              content: text,
+            },
+          ];
+        });
       } catch (e) {
         showErrorToast("Unexpected exception");
       } finally {
