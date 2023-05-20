@@ -8,3 +8,9 @@ export const ChatGPTMessage = z.object({
   content: z.string(),
 });
 export type ChatGPTMessageType = z.infer<typeof ChatGPTMessage>;
+
+export const schemaPostChat = z.object({
+  text: z.string().min(1),
+  messages: z.array(ChatGPTMessage),
+  distance: z.number().gte(0),
+});

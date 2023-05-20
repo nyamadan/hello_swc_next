@@ -15,3 +15,10 @@ model User {
   name      String   @unique
   createdAt DateTime @default(now())
 }
+
+model Embedding {
+  id        String   @id @unique
+  text      String   @unique
+  vector    Bytes
+  createdAt DateTime @default(now())
+}

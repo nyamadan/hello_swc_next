@@ -5,6 +5,7 @@ import useSWR from "@/hooks/useSWR";
 import { GQL_GET_HOME_PAGE } from "@/query/query";
 import Link from "next/link";
 import Chat from "./Chat";
+import PostEmbedding from "./PostEmbedding";
 
 export default function Home() {
   const { data: page } = useSWR({
@@ -19,6 +20,7 @@ export default function Home() {
     <div>
       <p>Hi, {user.name}.</p>
       <Chat user={user} />
+      <PostEmbedding />
       <Link href="/api/auth/signout">Sign out</Link>
     </div>
   );

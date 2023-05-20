@@ -1,11 +1,6 @@
 "use client";
 
 import {
-  ChatGPTMessage,
-  ChatGPTMessageType,
-  schemaPostChat,
-} from "@/app/api/openai";
-import {
   Loading,
   addLoading,
   createLoading,
@@ -13,27 +8,14 @@ import {
   isLoading,
   removeLoading,
 } from "@/loading";
-import { User } from "@/types/generated/graphql";
 import { Button, Input, useToast } from "@chakra-ui/react";
 import classNames from "classnames";
 import React, { useCallback, useState } from "react";
-import z from "zod";
 
-const initialMessages = [
-  {
-    role: "assistant",
-    content: "こんにちは！何でも聞いてください！",
-  },
-] satisfies ChatGPTMessageType[];
+interface Props {}
 
-interface Props {
-  user: User;
-}
-
-export default function Chat({ user }: Props) {
+export default function PostEmbedding({}: Props) {
   const toast = useToast();
-  const [messages, setMessages] =
-    useState<ChatGPTMessageType[]>(initialMessages);
   const [loadings, setLoading] = useState<Loading<"POST_MESSAGE">[]>([]);
   const [input, setInput] = useState("");
   const isInvalidInput = /^\s*$/.test(input);
@@ -72,36 +54,13 @@ export default function Chat({ user }: Props) {
       setLoading(addLoading(loading));
 
       try {
-        const params = schemaPostChat.parse({
-          distance: 0.5,
-          text: input,
-          messages: messages.slice(-10) satisfies z.infer<
-            typeof ChatGPTMessage
-          >[],
-        } satisfies z.infer<typeof schemaPostChat>);
-        const response = await fetch("/api/chat", {
+        await fetch("/api/embedding", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(params),
-        });
-
-        if (response.status !== 200) {
-          throw new Error("Request failed");
-        }
-
-        const { text } = await response.json();
-        setMessages((prev) => {
-          return [
-            ...prev,
-            {
-              role: "user",
-              content: input,
-            },
-            {
-              role: "assistant",
-              content: text,
-            },
-          ];
+          body: JSON.stringify({
+            type: "url",
+            url: input,
+          }),
         });
       } catch (e) {
         showErrorToast("Unexpected exception");
@@ -110,16 +69,11 @@ export default function Chat({ user }: Props) {
         setInput("");
       }
     },
-    [input, isInvalidInput, messages, showErrorToast]
+    [input, isInvalidInput, showErrorToast]
   );
 
   return (
     <div>
-      <div>
-        {messages.map(({ content }, idx) => (
-          <p key={idx}>{content}</p>
-        ))}
-      </div>
       <form onSubmit={onSubmit}>
         <div className={classNames("flex", "flex-row", "max-w-xl")}>
           <Input
@@ -134,7 +88,7 @@ export default function Chat({ user }: Props) {
             loadingText="Processing"
             isDisabled={isLoading(loadings) || isInvalidInput}
           >
-            Post Message
+            Post Embedding
           </Button>
         </div>
       </form>
