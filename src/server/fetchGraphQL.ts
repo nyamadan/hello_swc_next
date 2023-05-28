@@ -14,7 +14,7 @@ export default async function fetchGraphQL<Req extends MyRequest>(req: Req) {
     cache: "no-store",
   });
   const { data } = (await response.json()) as {
-    data: MyResponse[Req["query"]];
+    data?: MyResponse[Req["query"]];
   };
   return { key: body, data };
 }

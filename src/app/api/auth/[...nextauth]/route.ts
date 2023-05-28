@@ -20,12 +20,14 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const {
-          data: { getUsersByName },
-        } = await fetchGraphQL({
+        const { data: getUsersByNameData } = await fetchGraphQL({
           query: GQL_GET_USERS_BY_NAME,
           variables: { name: credentials.name },
         });
+        if (getUsersByNameData == null) {
+          return null;
+        }
+        const { getUsersByName } = getUsersByNameData;
 
         if (getUsersByName.length > 0) {
           const user = getUsersByName[0];
@@ -35,12 +37,16 @@ export const authOptions: NextAuthOptions = {
           };
         }
 
-        const {
-          data: { addUser },
-        } = await fetchGraphQL({
+        const { data: addUserData } = await fetchGraphQL({
           query: GQL_ADD_USER,
           variables: { name: credentials.name },
         });
+
+        if (addUserData == null) {
+          return null;
+        }
+
+        const { addUser } = addUserData;
 
         return {
           id: addUser.id,
