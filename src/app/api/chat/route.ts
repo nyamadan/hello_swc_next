@@ -97,41 +97,64 @@ export async function POST(req: NextRequest) {
       messages.push({ role: "user", content: text });
     }
 
-    const chat = new ChatOpenAI({
-      openAIApiKey: process.env.OPENAI_API_KEY,
-      modelName: "gpt-3.5-turbo",
-      temperature: process.env.AI_TEMP ? Number(process.env.AI_TEMP) : 0.7,
-      maxTokens: process.env.AI_MAX_TOKENS
-        ? Number(process.env.AI_MAX_TOKENS)
-        : 100,
-      topP: 1,
-      frequencyPenalty: 0,
-      presencePenalty: 0,
-      streaming: false,
-      n: 1,
-    });
+    const encoder = new TextEncoder();
+    return new Response(
+      new ReadableStream({
+        async start(controller) {
+          const chat = new ChatOpenAI({
+            openAIApiKey: process.env.OPENAI_API_KEY,
+            modelName: "gpt-3.5-turbo",
+            temperature: process.env.AI_TEMP
+              ? Number(process.env.AI_TEMP)
+              : 0.7,
+            maxTokens: process.env.AI_MAX_TOKENS
+              ? Number(process.env.AI_MAX_TOKENS)
+              : 100,
+            topP: 1,
+            frequencyPenalty: 0,
+            presencePenalty: 0,
+            streaming: true,
+            n: 1,
+            callbacks: [
+              {
+                handleLLMNewToken(token: string) {
+                  const buffer = encoder.encode(token);
+                  controller.enqueue(buffer);
+                },
+              },
+            ],
+          });
 
-    const response = await chat.call(
-      messages.map((message) => {
-        const { role, content } = message;
-        switch (role) {
-          case "user": {
-            return new HumanChatMessage(content);
-          }
-          case "assistant": {
-            return new AIChatMessage(content);
-          }
-          case "system": {
-            return new SystemChatMessage(content);
-          }
-          default: {
-            throw new Error(`Unknown role: ${role}`);
-          }
-        }
-      })
+          await chat.call(
+            messages.map((message) => {
+              const { role, content } = message;
+              switch (role) {
+                case "user": {
+                  return new HumanChatMessage(content);
+                }
+                case "assistant": {
+                  return new AIChatMessage(content);
+                }
+                case "system": {
+                  return new SystemChatMessage(content);
+                }
+                default: {
+                  throw new Error(`Unknown role: ${role}`);
+                }
+              }
+            })
+          );
+          controller.close()
+        },
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "text/plain; charset=UTF-8",
+          "Cache-Control": "no-cache",
+        },
+      }
     );
-
-    return NextResponse.json({ text: response.text });
   } catch (e: any) {
     const error = e?.response?.data?.error ?? {};
     const status = e?.response?.statusCode ?? 500;

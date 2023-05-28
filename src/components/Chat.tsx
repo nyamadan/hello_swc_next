@@ -5,6 +5,7 @@ import {
   ChatGPTMessageType,
   schemaPostChat,
 } from "@/app/api/openai";
+import { assertIfNull } from "@/asserts";
 import {
   Loading,
   addLoading,
@@ -89,7 +90,8 @@ export default function Chat({ user }: Props) {
           throw new Error("Request failed");
         }
 
-        const { text } = await response.json();
+        setInput("");
+
         setMessages((prev) => {
           return [
             ...prev,
@@ -99,15 +101,37 @@ export default function Chat({ user }: Props) {
             },
             {
               role: "assistant",
-              content: text,
+              content: "",
             },
           ];
         });
+        const reader = response.body?.getReader();
+        assertIfNull(reader);
+
+        const decoder = new TextDecoder("utf8");
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            break;
+          }
+
+          assertIfNull(value);
+
+          setMessages((prev) => {
+            const next = [...prev];
+            let i = next.length - 1;
+            next[i] = {
+              ...prev[i],
+              content: prev[i].content + decoder.decode(value),
+            };
+            return next;
+          });
+        }
       } catch (e) {
         showErrorToast("Unexpected exception");
       } finally {
         setLoading(removeLoading(loading));
-        setInput("");
       }
     },
     [input, isInvalidInput, messages, showErrorToast]
@@ -117,7 +141,7 @@ export default function Chat({ user }: Props) {
     <div>
       <div>
         {messages.map(({ content }, idx) => (
-          <p key={idx}>{content}</p>
+          <div className={classNames("whitespace-pre-wrap")} key={idx}>{content}</div>
         ))}
       </div>
       <form onSubmit={onSubmit}>
