@@ -1,5 +1,4 @@
 "use client";
-
 import {
   ChatGPTMessage,
   ChatGPTMessageType,
@@ -17,7 +16,8 @@ import {
 import { User } from "@/types/generated/graphql";
 import { Button, Input, useToast } from "@chakra-ui/react";
 import classNames from "classnames";
-import React, { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
 import z from "zod";
 
 const initialMessages = [
@@ -32,12 +32,16 @@ interface Props {
 }
 
 export default function Chat({ user }: Props) {
+  interface Inputs {
+    input: string;
+  }
+
+  const { register, handleSubmit, reset, formState } = useForm<Inputs>();
+
   const toast = useToast();
   const [messages, setMessages] =
     useState<ChatGPTMessageType[]>(initialMessages);
   const [loadings, setLoading] = useState<Loading<"POST_MESSAGE">[]>([]);
-  const [input, setInput] = useState("");
-  const isInvalidInput = /^\s*$/.test(input);
 
   const showErrorToast = useCallback(
     (title: string) => {
@@ -52,22 +56,16 @@ export default function Chat({ user }: Props) {
     [toast]
   );
 
-  const onChangeInput = useCallback<React.ChangeEventHandler<HTMLInputElement>>(
-    (ev) => {
-      setInput(ev.target.value);
-    },
-    []
-  );
+  useEffect(() => {
+    if (formState.isSubmitted && !formState.isValid) {
+      showErrorToast("Form is invalid");
+    }
 
-  const onSubmit = useCallback<React.FormEventHandler>(
-    async (ev) => {
-      ev.preventDefault();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formState.submitCount]);
 
-      if (isInvalidInput) {
-        showErrorToast("Please input message");
-        return;
-      }
-
+  const onSubmit: SubmitHandler<Inputs> = useCallback<SubmitHandler<Inputs>>(
+    async ({ input }) => {
       const loading =
         createLoading<(typeof loadings)[number]["type"]>("POST_MESSAGE");
       setLoading(addLoading(loading));
@@ -89,8 +87,6 @@ export default function Chat({ user }: Props) {
         if (response.status !== 200) {
           throw new Error("Request failed");
         }
-
-        setInput("");
 
         setMessages((prev) => {
           return [
@@ -131,32 +127,34 @@ export default function Chat({ user }: Props) {
       } catch (e) {
         showErrorToast("Unexpected exception");
       } finally {
+        reset();
         setLoading(removeLoading(loading));
       }
     },
-    [input, isInvalidInput, messages, showErrorToast]
+    [messages, reset, showErrorToast]
   );
 
   return (
     <div>
       <div>
         {messages.map(({ content }, idx) => (
-          <div className={classNames("whitespace-pre-wrap")} key={idx}>{content}</div>
+          <div className={classNames("whitespace-pre-wrap")} key={idx}>
+            {content}
+          </div>
         ))}
       </div>
-      <form onSubmit={onSubmit}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div className={classNames("flex", "flex-row", "max-w-xl")}>
           <Input
             readOnly={isLoading(loadings)}
-            value={input}
-            onChange={onChangeInput}
+            {...register("input", { required: true })}
           />
           <Button
             className={classNames("flex-grow-0", "w-48")}
             type="submit"
             isLoading={includeLoadingType(loadings, "POST_MESSAGE")}
             loadingText="Processing"
-            isDisabled={isLoading(loadings) || isInvalidInput}
+            isDisabled={isLoading(loadings)}
           >
             Post Message
           </Button>
