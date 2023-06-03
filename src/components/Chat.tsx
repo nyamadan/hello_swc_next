@@ -56,14 +56,6 @@ export default function Chat({ user }: Props) {
     [toast]
   );
 
-  useEffect(() => {
-    if (formState.isSubmitted && !formState.isValid) {
-      showErrorToast("Form is invalid");
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formState.submitCount]);
-
   const onSubmit: SubmitHandler<Inputs> = useCallback<SubmitHandler<Inputs>>(
     async ({ input }) => {
       const loading =
@@ -154,7 +146,7 @@ export default function Chat({ user }: Props) {
             type="submit"
             isLoading={includeLoadingType(loadings, "POST_MESSAGE")}
             loadingText="Processing"
-            isDisabled={isLoading(loadings)}
+            isDisabled={isLoading(loadings) || !formState.isValid}
           >
             Post Message
           </Button>
